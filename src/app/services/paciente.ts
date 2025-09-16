@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export interface Paciente {
-  pacienteId?: number;
+  pacientesId?: number;
   tipoDocumento: string;
   numeroDocumento: string;
   nombreCompleto: string;
@@ -19,35 +19,35 @@ export interface Paciente {
 @Injectable({
   providedIn: 'root'
 })
-export class Paciente {
+export class PacienteService {
+
   private apiUrl = 'https://localhost:7121/api/Hospital';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  /**Obtener todos los pacientes */
+  /** Obtener todos los pacientes */
   getPacientes(): Observable<Paciente[]> {
     return this.http.get<Paciente[]>(this.apiUrl);
   }
 
-  /**Obtener un paciente por id */
+  /** Obtener un paciente por id */
   getPaciente(id: number): Observable<Paciente> {
-    const url = `${this.apiUrl}/${id}`;
-    return this.http.get<Paciente>(url);
+    return this.http.get<Paciente>(`${this.apiUrl}/${id}`);
   }
 
-  /**Crear un paciente */
+  /** Crear un paciente */
   createPaciente(paciente: Paciente): Observable<Paciente> {
-    return this.http.post<Paciente>(this.apiUrl, paciente);
+    // 👇 se corrige la ruta para coincidir con [HttpPost("guardar")] en el backend
+    return this.http.post<Paciente>(`${this.apiUrl}/guardar`, paciente);
   }
 
-  /** Actializar un paciente existente */
-  updatePaciente(id:number, paciente: Paciente): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, paciente);
+  /** Actualizar un paciente existente */
+  updatePaciente(id: number, paciente: Paciente): Observable<Paciente> {
+    return this.http.put<Paciente>(`${this.apiUrl}/${id}`, paciente);
   }
 
   /** Eliminar un paciente existente */
   deletePaciente(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
-
 }

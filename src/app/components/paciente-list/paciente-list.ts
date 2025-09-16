@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
-import { Paciente } from '../../services/paciente';
+import { Paciente, PacienteService } from '../../services/paciente';
 
 @Component({
   selector: 'app-paciente-list',
@@ -17,23 +17,30 @@ import { Paciente } from '../../services/paciente';
     MatButtonModule
   ],
   templateUrl: './paciente-list.html',
-  styleUrl: './paciente-list.scss'
+  styleUrls: ['./paciente-list.scss']
 })
-export class PacienteList implements OnInit {
-  displayedColumns: string[] = ['id', 'nombre', 'documento', 'coreo','acciones'];
+export class PacienteListComponent implements OnInit {
+  displayedColumns: string[] = ['nombreCompleto', 'correoElectronico', 'telefono', 'acciones'];
   pacientes: Paciente[] = [];
 
-  constructor(private pacienteService: Paciente ) { }
+  // ✅ Aquí declaramos pacienteService para que Angular lo inyecte
+  constructor(private pacienteService: PacienteService) {}
 
   ngOnInit(): void {
-      this.loadPacientes();
+    this.loadPacientes();
   }
 
   loadPacientes(): void {
-    this.pacienteService.getPacientes().subscribe(data => (this.pacientes = data));
+    this.pacienteService.getPacientes().subscribe({
+      next: (data) => (this.pacientes = data),
+      error: (err) => console.error('Error cargando pacientes', err)
+    });
   }
 
   deletePaciente(id: number): void {
-    this.pacienteService.deletePaciente(id).subscribe(() => this.loadPacientes());
+    this.pacienteService.deletePaciente(id).subscribe({
+      next: () => this.loadPacientes(),
+      error: (err) => console.error('Error eliminando paciente', err)
+    });
   }
 }

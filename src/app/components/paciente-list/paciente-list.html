@@ -10,7 +10,7 @@
       <td mat-cell *matCellDef="let p"> {{ p.pacienteId }} </td>
     </ng-container>
 
-    <ng-container matColumnDef="nombre">
+    <ng-container matColumnDef="nombreCompleto">
       <th mat-header-cell *matHeaderCellDef> Nombre </th>
       <td mat-cell *matCellDef="let p"> {{ p.nombreCompleto }} </td>
     </ng-container>
@@ -20,15 +20,20 @@
       <td mat-cell *matCellDef="let p"> {{ p.tipoDocumento }} - {{ p.numeroDocumento }} </td>
     </ng-container>
 
-    <ng-container matColumnDef="correo">
+    <ng-container matColumnDef="correoElectronico">
       <th mat-header-cell *matHeaderCellDef> Correo </th>
       <td mat-cell *matCellDef="let p"> {{ p.correoElectronico }} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="telefono">
+      <th mat-header-cell *matHeaderCellDef> Teléfono </th>
+      <td mat-cell *matCellDef="let paciente"> {{paciente.telefono}} </td>
     </ng-container>
 
     <ng-container matColumnDef="acciones">
       <th mat-header-cell *matHeaderCellDef> Acciones </th>
       <td mat-cell *matCellDef="let p">
-        <button mat-button color="warn" (click)="deletePaciente(p.pacienteId!)">Eliminar</button>
+        <button mat-button color="warn" (click)="deletePaciente(p.pacientesId!)">Eliminar</button>
       </td>
     </ng-container>
 

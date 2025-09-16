@@ -1,12 +1,12 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { Paciente } from '../../services/paciente';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { ActivatedRoute, Router } from '@angular/router';
+import { PacienteService } from '../../services/paciente';
 
 @Component({
   selector: 'app-paciente-form',
@@ -28,7 +28,7 @@ export class PacienteFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private pacienteService: Paciente,
+    private pacienteService: PacienteService, // ✅ aquí cambiamos
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -66,18 +66,23 @@ export class PacienteFormComponent implements OnInit {
 
   /** Crear o actualizar paciente */
   onSubmit(): void {
-    if (this.pacienteForm.invalid) return;
+  if (this.pacienteForm.invalid) return;
 
-    const paciente: Paciente = this.pacienteForm.getRawValue();
+  // Quitar el ID si existe (lo maneja el backend)
+  const { pacientesId, ...paciente } = this.pacienteForm.getRawValue();
 
-    if (this.editMode && this.pacienteId) {
-      this.pacienteService.updatePaciente(this.pacienteId, paciente).subscribe(() => {
-        this.router.navigate(['/']);
-      });
-    } else {
-      this.pacienteService.createPaciente(paciente).subscribe(() => {
-        this.router.navigate(['/']);
-      });
-    }
+  // Formatear fechaNacimiento a YYYY-MM-DD
+  paciente.fechaNacimiento = new Date(paciente.fechaNacimiento).toISOString().split('T')[0];
+
+  if (this.editMode && this.pacienteId) {
+    this.pacienteService.updatePaciente(this.pacienteId, paciente).subscribe(() => {
+      this.router.navigate(['/']);
+    });
+  } else {
+    this.pacienteService.createPaciente(paciente).subscribe(() => {
+      this.router.navigate(['/']);
+    });
   }
+}
+
 }
