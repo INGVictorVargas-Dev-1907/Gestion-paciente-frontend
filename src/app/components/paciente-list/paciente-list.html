@@ -1,43 +1,99 @@
 <mat-toolbar color="primary">Gestión de Pacientes</mat-toolbar>
 
 <div class="container mt-3">
-  <button mat-raised-button color="primary" routerLink="/nuevo">Nuevo Paciente</button>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <button mat-raised-button color="primary" routerLink="/nuevo">Nuevo Paciente</button>
 
-  <table mat-table [dataSource]="pacientes" class="mat-elevation-z8 w-100 mt-3">
+    <mat-form-field appearance="outline" class="ml-auto w-25">
+      <mat-label>Buscar paciente</mat-label>
+      <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por nombre o documento">
+    </mat-form-field>
+  </div>
 
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef> ID </th>
-      <td mat-cell *matCellDef="let p"> {{ p.pacienteId }} </td>
-    </ng-container>
+  <div class="mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource" matSort class="w-100">
 
-    <ng-container matColumnDef="nombreCompleto">
-      <th mat-header-cell *matHeaderCellDef> Nombre </th>
-      <td mat-cell *matCellDef="let p"> {{ p.nombreCompleto }} </td>
-    </ng-container>
+      <ng-container matColumnDef="pacientesId">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+        <td mat-cell *matCellDef="let p"> {{ p.pacientesId }} </td>
+      </ng-container>
 
-    <ng-container matColumnDef="documento">
-      <th mat-header-cell *matHeaderCellDef> Documento </th>
-      <td mat-cell *matCellDef="let p"> {{ p.tipoDocumento }} - {{ p.numeroDocumento }} </td>
-    </ng-container>
+      <ng-container matColumnDef="tipoDocumento">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Tipo Documento </th>
+        <td mat-cell *matCellDef="let p"> {{ p.tipoDocumento }} </td>
+      </ng-container>
 
-    <ng-container matColumnDef="correoElectronico">
-      <th mat-header-cell *matHeaderCellDef> Correo </th>
-      <td mat-cell *matCellDef="let p"> {{ p.correoElectronico }} </td>
-    </ng-container>
+      <ng-container matColumnDef="numeroDocumento">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Número Documento </th>
+        <td mat-cell *matCellDef="let p"> {{ p.numeroDocumento }} </td>
+      </ng-container>
 
-    <ng-container matColumnDef="telefono">
-      <th mat-header-cell *matHeaderCellDef> Teléfono </th>
-      <td mat-cell *matCellDef="let paciente"> {{paciente.telefono}} </td>
-    </ng-container>
+      <ng-container matColumnDef="nombreCompleto">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Nombre </th>
+        <td mat-cell *matCellDef="let p"> {{ p.nombreCompleto }} </td>
+      </ng-container>
 
-    <ng-container matColumnDef="acciones">
-      <th mat-header-cell *matHeaderCellDef> Acciones </th>
-      <td mat-cell *matCellDef="let p">
-        <button mat-button color="warn" (click)="deletePaciente(p.pacientesId!)">Eliminar</button>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="fechaNacimiento">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha Nacimiento </th>
+        <td mat-cell *matCellDef="let p"> {{ p.fechaNacimiento | date }} </td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-  </table>
+      <ng-container matColumnDef="correoElectronico">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Correo </th>
+        <td mat-cell *matCellDef="let p"> {{ p.correoElectronico }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="genero">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Género </th>
+        <td mat-cell *matCellDef="let p"> {{ p.genero }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="direccion">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Dirección </th>
+        <td mat-cell *matCellDef="let p"> {{ p.direccion }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="telefono">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Teléfono </th>
+        <td mat-cell *matCellDef="let p"> {{ p.telefono }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="activo">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Activo </th>
+        <td mat-cell *matCellDef="let p"> {{ p.activo ? 'Sí' : 'No' }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fechaRegistro">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha Registro </th>
+        <td mat-cell *matCellDef="let p"> {{ p.fechaRegistro | date:'yyyy-MM-dd HH:mm' }} </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef> Acciones </th>
+        <td mat-cell *matCellDef="let p">
+          <button mat-icon-button color="primary" [routerLink]="['/editar', p.pacientesId]">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="deletePaciente(p.pacientesId!)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell text-center" colspan="12">
+          No se encontraron pacientes que coincidan con la búsqueda.
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+
+  <div *ngIf="dataSource.data.length === 0" class="text-center mt-3">
+    <p>No hay pacientes registrados</p>
+  </div>
 </div>

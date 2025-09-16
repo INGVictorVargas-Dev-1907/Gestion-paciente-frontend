@@ -3,17 +3,17 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export interface Paciente {
-  pacientesId?: number;
+  pacientesId?: number;  // lo genera SQL
   tipoDocumento: string;
   numeroDocumento: string;
   nombreCompleto: string;
-  fechaNacimiento: string;
+  fechaNacimiento: string; // se maneja como string en ISO "yyyy-MM-dd"
   correoElectronico: string;
-  genero: string;
+  genero: 'M' | 'F' | 'Otro';
   direccion?: string;
   telefono?: string;
   activo: boolean;
-  fechaRegistro?: string;
+  fechaRegistro?: string; // generado automáticamente
 }
 
 @Injectable({

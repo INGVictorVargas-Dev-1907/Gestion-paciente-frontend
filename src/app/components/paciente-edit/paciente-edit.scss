@@ -1,0 +1,19 @@
+.edit-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.edit-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #3f51b5; // color Angular Material Indigo
+}
+
+button {
+  margin-right: 1rem;
+}

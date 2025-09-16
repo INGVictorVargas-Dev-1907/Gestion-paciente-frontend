@@ -1,10 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { Component, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { RouterModule } from '@angular/router';
 import { Paciente, PacienteService } from '../../services/paciente';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-paciente-list',
@@ -14,33 +20,75 @@ import { Paciente, PacienteService } from '../../services/paciente';
     RouterModule,
     MatTableModule,
     MatToolbarModule,
-    MatButtonModule
+    MatButtonModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatIconModule,
+    DatePipe
   ],
   templateUrl: './paciente-list.html',
-  styleUrls: ['./paciente-list.scss']
 })
-export class PacienteListComponent implements OnInit {
-  displayedColumns: string[] = ['nombreCompleto', 'correoElectronico', 'telefono', 'acciones'];
-  pacientes: Paciente[] = [];
+export class PacienteListComponent implements OnInit, OnDestroy {
+  displayedColumns: string[] = [
+    'pacientesId',
+    'tipoDocumento',
+    'numeroDocumento',
+    'nombreCompleto',
+    'fechaNacimiento',
+    'correoElectronico',
+    'genero',
+    'direccion',
+    'telefono',
+    'activo',
+    'fechaRegistro',
+    'acciones'
+  ];
+  dataSource = new MatTableDataSource<Paciente>();
 
-  // ✅ Aquí declaramos pacienteService para que Angular lo inyecte
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
+  private unsubscribe$ = new Subject<void>();
+
   constructor(private pacienteService: PacienteService) {}
 
   ngOnInit(): void {
     this.loadPacientes();
   }
 
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+
   loadPacientes(): void {
-    this.pacienteService.getPacientes().subscribe({
-      next: (data) => (this.pacientes = data),
-      error: (err) => console.error('Error cargando pacientes', err)
-    });
+    this.pacienteService.getPacientes()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (data) => {
+          this.dataSource.data = data;
+          this.dataSource.paginator = this.paginator;
+          this.dataSource.sort = this.sort;
+        },
+        error: (err) => console.error('Error cargando pacientes', err)
+      });
+  }
+
+  applyFilter(event: Event): void {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.dataSource.filter = filterValue.trim().toLowerCase();
   }
 
   deletePaciente(id: number): void {
-    this.pacienteService.deletePaciente(id).subscribe({
-      next: () => this.loadPacientes(),
-      error: (err) => console.error('Error eliminando paciente', err)
-    });
+    if (confirm('¿Está seguro de que desea eliminar este paciente?')) {
+      this.pacienteService.deletePaciente(id)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: () => this.loadPacientes(),
+          error: (err) => console.error('Error eliminando paciente', err)
+        });
+    }
   }
 }

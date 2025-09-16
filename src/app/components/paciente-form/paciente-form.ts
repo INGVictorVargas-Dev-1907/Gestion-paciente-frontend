@@ -1,12 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ActivatedRoute, Router } from '@angular/router';
-import { PacienteService } from '../../services/paciente';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Paciente, PacienteService } from '../../services/paciente';
+import { Subject, takeUntil, finalize } from 'rxjs';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-paciente-form',
@@ -17,24 +24,34 @@ import { PacienteService } from '../../services/paciente';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatCardModule
+    MatCardModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatSelectModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    RouterModule,
+    MatCheckboxModule
   ],
   templateUrl: './paciente-form.html'
 })
-export class PacienteFormComponent implements OnInit {
+export class PacienteFormComponent implements OnInit, OnDestroy {
   pacienteForm!: FormGroup;
   editMode = false;
   pacienteId?: number;
+  isLoading = false;
+  private unsubscribe$ = new Subject<void>();
+  private originalPaciente!: Paciente;
 
   constructor(
     private fb: FormBuilder,
-    private pacienteService: PacienteService, // ✅ aquí cambiamos
+    private pacienteService: PacienteService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    // Inicializar el formulario
     this.pacienteForm = this.fb.group({
       tipoDocumento: ['', Validators.required],
       numeroDocumento: ['', Validators.required],
@@ -47,8 +64,7 @@ export class PacienteFormComponent implements OnInit {
       activo: [true]
     });
 
-    // Detectar si estamos en modo edición
-    this.route.params.subscribe(params => {
+    this.route.params.pipe(takeUntil(this.unsubscribe$)).subscribe(params => {
       if (params['id']) {
         this.editMode = true;
         this.pacienteId = +params['id'];
@@ -57,32 +73,74 @@ export class PacienteFormComponent implements OnInit {
     });
   }
 
-  /** Cargar datos de un paciente en el formulario */
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+
   loadPaciente(id: number): void {
-    this.pacienteService.getPaciente(id).subscribe(paciente => {
-      this.pacienteForm.patchValue(paciente);
-    });
+    this.isLoading = true;
+    this.pacienteService.getPaciente(id)
+      .pipe(
+        takeUntil(this.unsubscribe$),
+        finalize(() => this.isLoading = false)
+      )
+      .subscribe({
+        next: (paciente) => {
+          this.originalPaciente = paciente; // Guardar el paciente original
+
+          // Formatear la fecha para que el input type="date" la reconozca
+          const formattedDate = new Date(paciente.fechaNacimiento).toISOString().split('T')[0];
+          this.pacienteForm.patchValue({
+            ...paciente,
+            fechaNacimiento: formattedDate
+          });
+        },
+        error: (err) => {
+          console.error('Error cargando paciente', err);
+          this.snackBar.open('Error al cargar el paciente. Inténtelo de nuevo.', 'Cerrar', { duration: 3000 });
+        }
+      });
   }
 
-  /** Crear o actualizar paciente */
   onSubmit(): void {
-  if (this.pacienteForm.invalid) return;
+    if (this.pacienteForm.invalid) {
+      this.pacienteForm.markAllAsTouched();
+      return;
+    }
 
-  // Quitar el ID si existe (lo maneja el backend)
-  const { pacientesId, ...paciente } = this.pacienteForm.getRawValue();
+    this.isLoading = true;
 
-  // Formatear fechaNacimiento a YYYY-MM-DD
-  paciente.fechaNacimiento = new Date(paciente.fechaNacimiento).toISOString().split('T')[0];
+    // Fusionar los datos originales con los del formulario
+    const paciente = {
+      ...this.originalPaciente,
+      ...this.pacienteForm.value
+    };
 
-  if (this.editMode && this.pacienteId) {
-    this.pacienteService.updatePaciente(this.pacienteId, paciente).subscribe(() => {
-      this.router.navigate(['/']);
-    });
-  } else {
-    this.pacienteService.createPaciente(paciente).subscribe(() => {
-      this.router.navigate(['/']);
+    // Formatear la fecha antes de enviar
+    if (paciente.fechaNacimiento) {
+      paciente.fechaNacimiento = new Date(paciente.fechaNacimiento).toISOString().split('T')[0];
+    }
+
+    let request$;
+    if (this.editMode && this.pacienteId) {
+      request$ = this.pacienteService.updatePaciente(this.pacienteId, paciente);
+    } else {
+      request$ = this.pacienteService.createPaciente(paciente);
+    }
+
+    request$.pipe(
+      takeUntil(this.unsubscribe$),
+      finalize(() => this.isLoading = false)
+    ).subscribe({
+      next: () => {
+        this.snackBar.open(`Paciente ${this.editMode ? 'actualizado' : 'creado'} con éxito`, 'Cerrar', { duration: 3000 });
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        console.error('Error al guardar paciente', err);
+        this.snackBar.open(`Error al ${this.editMode ? 'actualizar' : 'crear'} el paciente.`, 'Cerrar', { duration: 3000 });
+      }
     });
   }
-}
-
 }

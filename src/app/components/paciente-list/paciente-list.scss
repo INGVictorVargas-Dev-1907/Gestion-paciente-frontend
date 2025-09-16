@@ -1,0 +1,22 @@
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+}
+
+mat-form-field {
+  margin-bottom: 1rem;
+}
+
+table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th.mat-header-cell {
+  font-weight: bold;
+  background: #f0f0f0;
+}
+
+td.mat-cell, th.mat-header-cell {
+  text-align: center;
+}
